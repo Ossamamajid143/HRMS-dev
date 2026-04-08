@@ -1,0 +1,307 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "HRMS Backend API",
+    "version": "1.0.0",
+    "description": "API documentation for the Human Resource Management System"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:6543/api",
+      "description": "Local Development Server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "summary": "Register a new employee/admin",
+        "tags": ["Authentication"],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "email": { "type": "string" },
+                  "password": { "type": "string" },
+                  "role": { "type": "string" },
+                  "department": { "type": "string" }
+                },
+                "required": ["name", "email", "password", "role", "department"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "User registered successfully" },
+          "400": { "description": "Validation Error or Email already in use" }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Login to receive JWT",
+        "tags": ["Authentication"],
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string" },
+                  "password": { "type": "string" }
+                },
+                "required": ["email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Login successful, returns token" },
+          "401": { "description": "Invalid credentials" }
+        }
+      }
+    },
+    "/employees": {
+      "get": {
+        "summary": "Get all employees",
+        "tags": ["Employees"],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Search by name or email"
+          }
+        ],
+        "responses": {
+          "200": { "description": "List of employees" },
+          "401": { "description": "Unauthorized" }
+        }
+      },
+      "post": {
+        "summary": "Create a new employee (Admin/HR only)",
+        "tags": ["Employees"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "email": { "type": "string", "format": "email" },
+                  "password": { "type": "string" },
+                  "role": { "type": "string" },
+                  "department": { "type": "string" }
+                },
+                "required": ["name", "email", "password", "role", "department"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Employee created" },
+          "403": { "description": "Forbidden - Insufficient privileges" }
+        }
+      }
+    },
+    "/employees/{id}": {
+      "get": {
+        "summary": "Get employee by ID",
+        "tags": ["Employees"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Employee details" },
+          "404": { "description": "Employee not found" }
+        }
+      },
+      "put": {
+        "summary": "Update employee (Admin/HR only)",
+        "tags": ["Employees"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "role": { "type": "string" },
+                  "department": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Employee updated" }
+        }
+      },
+      "delete": {
+        "summary": "Delete employee (Admin/HR only)",
+        "tags": ["Employees"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Employee deleted" }
+        }
+      }
+    },
+    "/attendance": {
+      "get": {
+        "summary": "Get all attendance logs (Admin/HR only)",
+        "tags": ["Attendance"],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "List of attendance logs" }
+        }
+      },
+      "post": {
+        "summary": "Create attendance record (Admin/HR only)",
+        "tags": ["Attendance"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "employeeId": { "type": "integer" },
+                  "date": { "type": "string", "example": "2023-10-01" },
+                  "checkInTime": { "type": "string", "example": "2023-10-01T09:00:00Z" },
+                  "checkOutTime": { "type": "string", "example": "2023-10-01T17:00:00Z" },
+                  "status": { "type": "string", "example": "PRESENT" }
+                },
+                "required": ["employeeId", "date", "checkInTime", "status"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Attendance record created" }
+        }
+      }
+    },
+    "/attendance/check-in": {
+      "post": {
+        "summary": "Record automatic check-in for current employee",
+        "tags": ["Attendance"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": { "type": "string", "example": "Present" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Checked in successfully" },
+          "400": { "description": "Already checked in" }
+        }
+      }
+    },
+    "/attendance/check-out": {
+      "post": {
+        "summary": "Record automatic check-out for current employee",
+        "tags": ["Attendance"],
+        "responses": {
+          "200": { "description": "Checked out successfully" },
+          "404": { "description": "No check-in record found" }
+        }
+      }
+    },
+    "/attendance/{employeeId}": {
+      "get": {
+        "summary": "Get attendance logs by employee ID",
+        "tags": ["Attendance"],
+        "parameters": [
+          {
+            "name": "employeeId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": { "type": "integer" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Employee attendance logs" }
+        }
+      }
+    }
+  }
+}

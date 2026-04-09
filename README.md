@@ -9,5 +9,4 @@ Corporate Human Resource Management System backend built with **TypeScript**, **
 - **Type-Safe Validation**: Integrated with Zod for request body verification.
 - **API Documentation**: Interactive Swagger UI.
 
----
-👉 **Repo**: [Ossamamajid143/HRMS-dev](https://github.com/Ossamamajid143/HRMS-dev)
+

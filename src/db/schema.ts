@@ -7,6 +7,7 @@ export const employees = pgTable('employees', {
   passwordHash: varchar('password_hash', { length: 255 }).notNull(),
   role: varchar('role', { length: 100 }).notNull(),
   department: varchar('department', { length: 100 }).notNull(),
+  status: varchar('status', { length: 50 }).notNull().default('Active'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 

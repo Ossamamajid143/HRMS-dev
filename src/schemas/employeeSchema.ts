@@ -15,5 +15,6 @@ export const updateEmployeeSchema = z.object({
     name: z.string().min(2).optional(),
     role: z.string().min(1).optional(),
     department: z.string().min(1).optional(),
+    status: z.enum(['Active', 'Inactive']).optional(),
   })
 });

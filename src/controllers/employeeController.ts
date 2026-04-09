@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import { db } from '../config/db';
 import { employees } from '../db/schema';
-import { eq, ilike, or, SQL } from 'drizzle-orm';
+import { eq, ilike, or, SQL, count } from 'drizzle-orm';
 
 export const createEmployee = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -42,16 +42,7 @@ export const getEmployees = async (req: Request, res: Response, next: NextFuncti
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const offset = (page - 1) * limit;
-    const search = req.query.search as string;
-
-    const query = db.select({
-      id: employees.id,
-      name: employees.name,
-      email: employees.email,
-      role: employees.role,
-      department: employees.department,
-      createdAt: employees.createdAt
-    }).from(employees);
+    const search = (req.query.search as string)?.trim();
 
     let condition: SQL | undefined;
     if (search) {
@@ -60,17 +51,31 @@ export const getEmployees = async (req: Request, res: Response, next: NextFuncti
         ilike(employees.email, `%${search}%`)
       );
     }
-    
-    if (condition) {
-      query.where(condition);
-    }
 
-    const paginatedEmployees = await query.limit(limit).offset(offset);
+    // Count total matching records
+    const totalResult = await db.select({ value: count() }).from(employees).where(condition);
+    const total = Number(totalResult[0].value);
+    const totalPages = Math.ceil(total / limit);
+
+    const data = await db.select({
+      id: employees.id,
+      name: employees.name,
+      email: employees.email,
+      role: employees.role,
+      department: employees.department,
+      status: employees.status,
+      createdAt: employees.createdAt
+    }).from(employees)
+      .where(condition)
+      .limit(limit)
+      .offset(offset);
     
     res.json({
       page,
       limit,
-      data: paginatedEmployees
+      total,
+      totalPages,
+      data
     });
   } catch (error) {
     next(error);
@@ -86,6 +91,7 @@ export const getEmployeeById = async (req: Request, res: Response, next: NextFun
       email: employees.email,
       role: employees.role,
       department: employees.department,
+      status: employees.status,
       createdAt: employees.createdAt
     }).from(employees).where(eq(employees.id, Number(id))).limit(1);
 
@@ -103,7 +109,7 @@ export const getEmployeeById = async (req: Request, res: Response, next: NextFun
 export const updateEmployee = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { id } = req.params;
-    const { name, role, department } = req.body;
+    const { name, role, department, status } = req.body;
 
     const existing = await db.select().from(employees).where(eq(employees.id, Number(id))).limit(1);
     if (existing.length === 0) {
@@ -115,12 +121,14 @@ export const updateEmployee = async (req: Request, res: Response, next: NextFunc
       name: name ?? existing[0].name,
       role: role ?? existing[0].role,
       department: department ?? existing[0].department,
+      status: status ?? existing[0].status,
     }).where(eq(employees.id, Number(id))).returning({
       id: employees.id,
       name: employees.name,
       email: employees.email,
       role: employees.role,
       department: employees.department,
+      status: employees.status,
     });
 
     res.json({ message: 'Employee updated', employee: updated[0] });
@@ -138,9 +146,11 @@ export const deleteEmployee = async (req: Request, res: Response, next: NextFunc
        return;
     }
 
-    await db.delete(employees).where(eq(employees.id, Number(id)));
+    await db.update(employees)
+      .set({ status: 'Inactive' })
+      .where(eq(employees.id, Number(id)));
 
-    res.json({ message: 'Employee deleted' });
+    res.json({ message: 'Employee deactivated successfully (Soft Delete)' });
   } catch (error) {
     next(error);
   }

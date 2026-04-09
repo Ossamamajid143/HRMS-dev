@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { db } from '../config/db';
-import { attendance } from '../db/schema';
-import { eq, desc, and } from 'drizzle-orm';
+import { attendance, employees } from '../db/schema';
+import { eq, desc, and, count } from 'drizzle-orm';
 import { AuthRequest } from '../middleware/authMiddleware';
 
 export const checkIn = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
@@ -9,6 +9,13 @@ export const checkIn = async (req: AuthRequest, res: Response, next: NextFunctio
     const employeeId = req.user!.id;
     const now = new Date();
     const today = now.toISOString().split('T')[0];
+
+    // Check employee status
+    const employee = await db.select().from(employees).where(eq(employees.id, employeeId)).limit(1);
+    if (!employee[0] || employee[0].status !== 'Active') {
+      res.status(403).json({ message: 'Attendance denied: Employee is Inactive/Terminated' });
+      return;
+    }
 
     // Check if user already checked in today
     const existing = await db.select().from(attendance)
@@ -91,7 +98,11 @@ export const getAttendance = async (req: Request, res: Response, next: NextFunct
     const limit = parseInt(req.query.limit as string) || 10;
     const offset = (page - 1) * limit;
 
-    const paginatedRecords = await db.select().from(attendance)
+    const totalResult = await db.select({ value: count() }).from(attendance);
+    const total = Number(totalResult[0].value);
+    const totalPages = Math.ceil(total / limit);
+
+    const data = await db.select().from(attendance)
       .orderBy(desc(attendance.date))
       .limit(limit)
       .offset(offset);
@@ -99,7 +110,9 @@ export const getAttendance = async (req: Request, res: Response, next: NextFunct
     res.json({
       page,
       limit,
-      data: paginatedRecords
+      total,
+      totalPages,
+      data
     });
   } catch (error) {
     next(error);
@@ -114,7 +127,12 @@ export const getAttendanceByEmployeeId = async (req: Request, res: Response, nex
     const limit = parseInt(req.query.limit as string) || 10;
     const offset = (page - 1) * limit;
 
-    const paginatedRecords = await db.select().from(attendance)
+    const totalResult = await db.select({ value: count() }).from(attendance)
+      .where(eq(attendance.employeeId, Number(employeeId)));
+    const total = Number(totalResult[0].value);
+    const totalPages = Math.ceil(total / limit);
+
+    const data = await db.select().from(attendance)
       .where(eq(attendance.employeeId, Number(employeeId)))
       .orderBy(desc(attendance.date))
       .limit(limit)
@@ -123,7 +141,9 @@ export const getAttendanceByEmployeeId = async (req: Request, res: Response, nex
     res.json({
       page,
       limit,
-      data: paginatedRecords
+      total,
+      totalPages,
+      data
     });
   } catch (error) {
     next(error);

@@ -104,7 +104,37 @@
           }
         ],
         "responses": {
-          "200": { "description": "List of employees" },
+          "200": { 
+            "description": "List of employees",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "page": { "type": "integer" },
+                    "limit": { "type": "integer" },
+                    "total": { "type": "integer" },
+                    "totalPages": { "type": "integer" },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "integer" },
+                          "name": { "type": "string" },
+                          "email": { "type": "string" },
+                          "role": { "type": "string" },
+                          "department": { "type": "string" },
+                          "status": { "type": "string" },
+                          "createdAt": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "401": { "description": "Unauthorized" }
         }
       },
@@ -117,13 +147,14 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": {
-                  "name": { "type": "string" },
-                  "email": { "type": "string", "format": "email" },
-                  "password": { "type": "string" },
-                  "role": { "type": "string" },
-                  "department": { "type": "string" }
-                },
+                  "properties": {
+                    "name": { "type": "string" },
+                    "email": { "type": "string", "format": "email" },
+                    "password": { "type": "string" },
+                    "role": { "type": "string" },
+                    "department": { "type": "string" },
+                    "status": { "type": "string", "enum": ["Active", "Inactive"] }
+                  },
                 "required": ["name", "email", "password", "role", "department"]
               }
             }
@@ -169,11 +200,12 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "properties": {
-                  "name": { "type": "string" },
-                  "role": { "type": "string" },
-                  "department": { "type": "string" }
-                }
+                  "properties": {
+                    "name": { "type": "string" },
+                    "role": { "type": "string" },
+                    "department": { "type": "string" },
+                    "status": { "type": "string", "enum": ["Active", "Inactive"] }
+                  }
               }
             }
           }
@@ -215,7 +247,23 @@
           }
         ],
         "responses": {
-          "200": { "description": "List of attendance logs" }
+          "200": { 
+            "description": "List of attendance logs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "page": { "type": "integer" },
+                    "limit": { "type": "integer" },
+                    "total": { "type": "integer" },
+                    "totalPages": { "type": "integer" },
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/Attendance" } }
+                  }
+                }
+              }
+            }
+          }
         }
       },
       "post": {
@@ -299,7 +347,23 @@
           }
         ],
         "responses": {
-          "200": { "description": "Employee attendance logs" }
+          "200": { 
+            "description": "Employee attendance logs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "page": { "type": "integer" },
+                    "limit": { "type": "integer" },
+                    "total": { "type": "integer" },
+                    "totalPages": { "type": "integer" },
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/Attendance" } }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }
